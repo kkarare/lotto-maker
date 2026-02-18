@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lotto-pro-v3'; // 모바일 호환성 수정 - 캐시 강제 갱신
+const CACHE_NAME = 'lotto-pro-v4'; // 고정 번호 기능 추가 - 캐시 강제 갱신
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
