@@ -101,12 +101,57 @@ function generateRandomSet() {
 }
 
 /**
+ * ⭐ 고정 번호 포함 랜덤 생성기
+ * fixedSet: 반드시 포함할 번호 Set
+ * excludedSet: 제외할 번호 Set
+ * remaining: 추가로 채울 번호 개수
+ */
+function generateRandomSetWithFixed(fixedSet, excludedSet, remaining) {
+    const set = new Set(fixedSet); // 고정 번호 먼저 세팅
+    let tries = 0;
+    while (set.size < SELECT_COUNT && tries < 1000) {
+        const num = Math.floor(Math.random() * TOTAL_BALLS) + 1;
+        if (!set.has(num) && !excludedSet.has(num)) {
+            set.add(num);
+        }
+        tries++;
+    }
+    if (set.size < SELECT_COUNT) return null; // 생성 실패
+    return Array.from(set).sort((a, b) => a - b);
+}
+
+/**
+ * ⭐ 고정 번호 포함 가중치(AI) 생성기
+ */
+function generateWeightedSetWithFixed(fixedSet, excludedSet, remaining) {
+    const set = new Set(fixedSet); // 고정 번호 먼저 세팅
+    const totalWeight = AI_WEIGHTS.reduce((sum, w) => sum + w, 0);
+    let tries = 0;
+    while (set.size < SELECT_COUNT && tries < 1000) {
+        let random = Math.random() * totalWeight;
+        let runningSum = 0;
+        for (let i = 1; i <= TOTAL_BALLS; i++) {
+            runningSum += AI_WEIGHTS[i];
+            if (random <= runningSum) {
+                if (!set.has(i) && !excludedSet.has(i)) {
+                    set.add(i);
+                }
+                break;
+            }
+        }
+        tries++;
+    }
+    if (set.size < SELECT_COUNT) return null; // 생성 실패
+    return Array.from(set).sort((a, b) => a - b);
+}
+
+/**
  * Weighted Generator (AI Simulation)
  * Uses roulette wheel selection based on AI_WEIGHTS.
  */
 function generateWeightedSet() {
     const set = new Set();
-    
+
     // Normalize weights calculation (optional, but good for understanding)
     const totalWeight = AI_WEIGHTS.reduce((sum, w) => sum + w, 0);
 
@@ -145,6 +190,27 @@ async function runMonteCarloSimulation() {
             .filter(n => !isNaN(n))
     );
 
+    // ⭐ Parse Fixed Numbers (고정 번호 파싱)
+    const fixedNums = [];
+    const fixedVal1 = parseInt(document.getElementById('fixedNum1').value);
+    const fixedVal2 = parseInt(document.getElementById('fixedNum2').value);
+
+    if (!isNaN(fixedVal1) && fixedVal1 >= 1 && fixedVal1 <= 45) fixedNums.push(fixedVal1);
+    if (!isNaN(fixedVal2) && fixedVal2 >= 1 && fixedVal2 <= 45) fixedNums.push(fixedVal2);
+
+    // 유효성 검사: 고정 번호 중복 체크
+    if (fixedNums.length === 2 && fixedNums[0] === fixedNums[1]) {
+        alert('고정 번호 두 개가 같습니다. 다른 번호를 입력해주세요.');
+        return { numbers: null, score: -1 };
+    }
+    // 유효성 검사: 고정 번호가 제외수와 겹치는지 체크
+    for (const fn of fixedNums) {
+        if (excludedSet.has(fn)) {
+            alert(`고정 번호 ${fn}이(가) 제외수에 포함되어 있습니다. 확인해주세요.`);
+            return { numbers: null, score: -1 };
+        }
+    }
+
     // 2. Setup Simulation
     const SIMULATION_COUNT = useMonteCarlo ? 10000 : 100; // Run less if MC is off
     const progressBar = document.getElementById('progressBar');
@@ -157,16 +223,16 @@ async function runMonteCarloSimulation() {
     // 3. Run Loop
     // Use chunks to yield to the UI thread for animation
     const CHUNK_SIZE = 500;
-    
+
     for (let i = 0; i < SIMULATION_COUNT; i += CHUNK_SIZE) {
         // Yield to UI
         await new Promise(resolve => requestAnimationFrame(resolve));
-        
+
         // Update UI
         const progress = Math.min(100, Math.round((i / SIMULATION_COUNT) * 100));
         progressBar.style.width = `${progress}%`;
-        loadingLog.innerText = `Simulating batch ${i} - ${i+CHUNK_SIZE}...`;
-        
+        loadingLog.innerText = `Simulating batch ${i} - ${i + CHUNK_SIZE}...`;
+
         // Dynamic Text
         if (i > SIMULATION_COUNT * 0.3) loadingText.innerText = "AC 복잡도 분석 중...";
         if (i > SIMULATION_COUNT * 0.6) loadingText.innerText = "9궁도 패턴 매칭 중...";
@@ -176,17 +242,24 @@ async function runMonteCarloSimulation() {
         for (let j = 0; j < CHUNK_SIZE; j++) {
             if (i + j >= SIMULATION_COUNT) break;
 
-            // Generate Candidate
-            let candidate = useAI ? generateWeightedSet() : generateRandomSet();
+            // ⭐ 고정 번호를 먼저 세팅하고, 나머지 자리만 채우기
+            const fixedSet = new Set(fixedNums);
+            const remaining = SELECT_COUNT - fixedSet.size; // 채워야 할 나머지 자리 수
 
-            // Check Exclusion (Critical Filter - Pass/Fail)
-            if (!checkExclusion(candidate, excludedSet)) continue;
+            // 나머지 번호 생성 (고정 번호 & 제외수 제외)
+            let candidate;
+            if (useAI) {
+                candidate = generateWeightedSetWithFixed(fixedSet, excludedSet, remaining);
+            } else {
+                candidate = generateRandomSetWithFixed(fixedSet, excludedSet, remaining);
+            }
+            if (!candidate) continue; // 생성 실패 시 스킵
 
             // Calculate Score based on Filters
             let score = 0;
-            
+
             // Base Score (Randomness)
-            score += Math.random() * 10; 
+            score += Math.random() * 10;
 
             // Filter Scored Checks
             if (useSum) score += checkSum(candidate) ? 20 : -50; // Heavily penalize bad sum
@@ -222,18 +295,18 @@ function renderBalls(numbers) {
         const ball = document.createElement('div');
         ball.classList.add('lotto-ball', getBallColor(num));
         ball.innerText = num;
-        
+
         // Staggered animation delay
         ball.style.animationDelay = `${index * 0.15}s`;
-        
+
         container.appendChild(ball);
     });
 
     // Update Status
     const statusLog = document.getElementById('statusLog');
-    const sum = numbers.reduce((a,b)=>a+b,0);
+    const sum = numbers.reduce((a, b) => a + b, 0);
     statusLog.innerText = `추출 완료! 총합: ${sum} / 시스템 적합도: 최상`;
-    
+
     // Play Sound (Optional, browser policy restricts auto audio, leaving as placeholder)
 }
 
@@ -248,9 +321,9 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
     try {
         // Run Async Logic
         const result = await runMonteCarloSimulation();
-        
+
         // Add a small artificial delay for "Dramatic Effect" if too fast
-        await new Promise(r => setTimeout(r, 500)); 
+        await new Promise(r => setTimeout(r, 500));
 
         // Hide overlay
         overlay.style.display = 'none';
@@ -258,11 +331,11 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
         // Render Result
         if (result && result.numbers) {
             renderBalls(result.numbers);
-            
+
             // Update Mini Stat
             const analysisDiv = document.getElementById('analysisStat');
             analysisDiv.innerHTML = `
-                <span>Sum: ${result.numbers.reduce((a,b)=>a+b,0)}</span> | 
+                <span>Sum: ${result.numbers.reduce((a, b) => a + b, 0)}</span> | 
                 <span>AC: ${getACValue(result.numbers)}</span> | 
                 <span>Score: ${Math.floor(result.score)}</span>
             `;
