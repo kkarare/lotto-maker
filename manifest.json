@@ -1,0 +1,17 @@
+{
+  "name": "인생 역전 로또 번호 생성기 - Pro",
+  "short_name": "Lotto Pro",
+  "description": "AI 기반 7단계 필터링 시스템을 갖춘 로또 번호 생성기",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

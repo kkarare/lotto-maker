@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- 모바일 뷰포트: user-scalable=no로 더블탭 줌 방지, viewport-fit=cover로 노치 대응 -->
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>인생 역전 로또 번호 생성기 - Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbit&family=Noto+Sans+KR:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <!-- iOS PWA 전체화면 지원 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Lotto Pro">
+    <!-- iOS는 SVG 아이콘 미지원 → 폴백으로 icon.svg 유지 (PNG 있으면 교체 권장) -->
+    <link rel="apple-touch-icon" href="icon.svg">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div class="background-glare"></div>
+
+    <div class="glass-container">
+        <header>
+            <h1>LOTTO <span class="highlight">PRO</span> GEN</h1>
+            <p>AI 기반 7단계 필터링 시스템</p>
+        </header>
+
+        <main>
+            <!-- 결과 표시 영역 -->
+            <div class="result-section">
+                <div class="balls-container" id="ballsContainer">
+                    <div class="placeholder">Ready?</div>
+                </div>
+                <div class="analysis-stat" id="analysisStat">
+                    <!-- 분석 데이터가 여기에 표시됩니다 -->
+                </div>
+            </div>
+
+            <!-- 컨트롤 패널 -->
+            <div class="control-panel">
+                <div class="settings-group">
+                    <h3>🛡️ 필터 설정 (7단계)</h3>
+                    <div class="switches">
+                        <label class="toggle">
+                            <input type="checkbox" id="filterSum" checked>
+                            <span class="slider"></span>
+                            <span class="label-text">총합 구간 (120-170)</span>
+                        </label>
+                        <label class="toggle">
+                            <input type="checkbox" id="filterAC" checked>
+                            <span class="slider"></span>
+                            <span class="label-text">AC 복잡도 (7+)</span>
+                        </label>
+                        <label class="toggle">
+                            <input type="checkbox" id="filterMirror" checked>
+                            <span class="slider"></span>
+                            <span class="label-text">동형수/끝수 매칭</span>
+                        </label>
+                        <label class="toggle">
+                            <input type="checkbox" id="filterMatrix" checked>
+                            <span class="slider"></span>
+                            <span class="label-text">9궁도 균형 분산</span>
+                        </label>
+                        <label class="toggle">
+                            <input type="checkbox" id="filterMonteCarlo" checked>
+                            <span class="slider"></span>
+                            <span class="label-text">몬테카를로 (10,000회)</span>
+                        </label>
+                        <label class="toggle">
+                            <input type="checkbox" id="filterAI" checked>
+                            <span class="slider"></span>
+                            <span class="label-text">AI 가중치 추천</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="exclusion-group">
+                    <h3>🚫 제외수 설정 (지난주 번호 등)</h3>
+                    <input type="text" id="exclusionInput" placeholder="예: 1, 15, 22, 30 (쉼표로 구분)">
+                </div>
+
+                <button id="generateBtn" class="generate-btn">
+                    <span class="btn-text">번호 추출하기</span>
+                    <span class="btn-shine"></span>
+                </button>
+            </div>
+        </main>
+
+        <footer>
+            <div class="status-log" id="statusLog">시스템 대기 중...</div>
+        </footer>
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <h2 id="loadingText">데이터 분석 중...</h2>
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+            <div class="log-text" id="loadingLog">초기화 중...</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

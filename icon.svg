@@ -1,0 +1,15 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="grad1" cx="50%" cy="50%" r="50%" fx="25%" fy="25%">
+      <stop offset="0%" style="stop-color:#facc15;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ca8a04;stop-opacity:1" />
+    </radialGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="10" stdDeviation="20" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="#0f172a" rx="100" ry="100"/>
+  <circle cx="256" cy="256" r="180" fill="url(#grad1)" filter="url(#shadow)"/>
+  <text x="50%" y="55%" font-family="Arial, sans-serif" font-size="200" fill="#fff" text-anchor="middle" dy=".3em" font-weight="bold">L</text>
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#fff" stroke-width="10" opacity="0.3"/>
+</svg>
