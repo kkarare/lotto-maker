@@ -21,6 +21,10 @@ const AI_WEIGHTS = Array.from({ length: 46 }, (_, i) => {
     return Math.max(0.1, weight + (Math.random() * 0.4 - 0.2)); // Add noise
 });
 
+let LottoHistory = [];
+const MAX_HISTORY = 5;
+const STORAGE_KEY = 'lotto_pro_history';
+
 // --- 2. Filter Functions ---
 
 /**
@@ -85,6 +89,89 @@ function checkExclusion(numbers, excludedSet) {
         if (excludedSet.has(n)) return false;
     }
     return true;
+}
+
+/**
+ * 6. Stats Utility: Odd/Even Ratio
+ */
+function getOddEvenRatio(numbers) {
+    const odds = numbers.filter(n => n % 2 !== 0).length;
+    const evens = numbers.length - odds;
+    return `${odds}:${evens}`;
+}
+
+/**
+ * 7. Stats Utility: High/Low Ratio (1-22 vs 23-45)
+ */
+function getHighLowRatio(numbers) {
+    const lows = numbers.filter(n => n <= 22).length;
+    const highs = numbers.length - lows;
+    return `${lows}:${highs}`;
+}
+
+// --- 3. History Management ---
+
+function saveToHistory(numbers) {
+    const record = {
+        numbers: [...numbers],
+        date: new Date().toLocaleString('ko-KR', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+    };
+
+    LottoHistory.unshift(record);
+    if (LottoHistory.length > MAX_HISTORY) {
+        LottoHistory.pop();
+    }
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(LottoHistory));
+    renderHistory();
+}
+
+function loadHistory() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        try {
+            LottoHistory = JSON.parse(saved);
+            renderHistory();
+        } catch (e) {
+            console.error("Failed to parse history", e);
+            LottoHistory = [];
+        }
+    }
+}
+
+function renderHistory() {
+    const container = document.getElementById('historyList');
+    if (!container) return;
+
+    if (LottoHistory.length === 0) {
+        container.innerHTML = '<div class="history-empty">기록이 없습니다</div>';
+        return;
+    }
+
+    container.innerHTML = LottoHistory.map(record => `
+        <div class="history-item">
+            <div class="history-balls">
+                ${record.numbers.map(n => `
+                    <div class="history-ball ${getBallColor(n)}" style="background: ${getBallColorHex(n)}">${n}</div>
+                `).join('')}
+            </div>
+            <div class="history-date">${record.date}</div>
+        </div>
+    `).join('');
+}
+
+// Helper to get raw hex for history balls (CSS linear-gradient is too complex for simple background property here)
+function getBallColorHex(num) {
+    if (num <= 10) return '#facc15';
+    if (num <= 20) return '#3b82f6';
+    if (num <= 30) return '#ef4444';
+    if (num <= 40) return '#64748b';
+    return '#22c55e';
 }
 
 // --- 3. Generator Engines ---
@@ -296,8 +383,8 @@ function renderBalls(numbers) {
         ball.classList.add('lotto-ball', getBallColor(num));
         ball.innerText = num;
 
-        // Staggered animation delay
-        ball.style.animationDelay = `${index * 0.15}s`;
+        // Staggered animation delay: 0.5s interval for 'Pop-Pop-Pop' effect
+        ball.style.animationDelay = `${index * 0.5}s`;
 
         container.appendChild(ball);
     });
@@ -332,13 +419,15 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
         if (result && result.numbers) {
             renderBalls(result.numbers);
 
-            // Update Mini Stat
-            const analysisDiv = document.getElementById('analysisStat');
-            analysisDiv.innerHTML = `
-                <span>Sum: ${result.numbers.reduce((a, b) => a + b, 0)}</span> | 
-                <span>AC: ${getACValue(result.numbers)}</span> | 
-                <span>Score: ${Math.floor(result.score)}</span>
-            `;
+            // Update Stats Display
+            document.getElementById('statSum').innerText = `Sum: ${result.numbers.reduce((a, b) => a + b, 0)}`;
+            document.getElementById('statAC').innerText = `AC: ${getACValue(result.numbers)}`;
+            document.getElementById('statOddEven').innerText = `홀짝: ${getOddEvenRatio(result.numbers)}`;
+            document.getElementById('statHighLow').innerText = `고저: ${getHighLowRatio(result.numbers)}`;
+            document.getElementById('statScore').innerText = `Score: ${Math.floor(result.score)}`;
+
+            // Save to History
+            saveToHistory(result.numbers);
         } else {
             alert("조건에 맞는 번호를 찾지 못했습니다. 필터를 조금 완화해보세요.");
         }
@@ -359,3 +448,8 @@ function getACValue(numbers) {
     }
     return differences.size - (numbers.length - 1);
 }
+
+// Initialize
+window.addEventListener('DOMContentLoaded', () => {
+    loadHistory();
+});

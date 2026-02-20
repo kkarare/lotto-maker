@@ -41,7 +41,7 @@
 
     <div class="glass-container">
         <header>
-            <h1>LOTTO <span class="highlight">PRO</span> GEN</h1>
+            <h1>LOTTO <span class="highlight">PRO</span> GEN <span class="version-tag">v5</span></h1>
             <p>AI 기반 7단계 필터링 시스템</p>
         </header>
 
@@ -53,6 +53,23 @@
                 </div>
                 <div class="analysis-stat" id="analysisStat">
                     <!-- 분석 데이터가 여기에 표시됩니다 -->
+                    <div class="stat-row">
+                        <span id="statSum">Sum: -</span>
+                        <span id="statAC">AC: -</span>
+                    </div>
+                    <div class="stat-row">
+                        <span id="statOddEven">홀짝: -</span>
+                        <span id="statHighLow">고저: -</span>
+                        <span id="statScore">Score: -</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 최근 추출 기록 섹션 (추가) -->
+            <div class="history-section" id="historySection">
+                <h3>📜 최근 추출 기록 (최근 5회)</h3>
+                <div class="history-list" id="historyList">
+                    <div class="history-empty">기록이 없습니다</div>
                 </div>
             </div>
 
