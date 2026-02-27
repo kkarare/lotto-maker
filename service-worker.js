@@ -1,11 +1,13 @@
-const CACHE_NAME = 'lotto-pro-v8'; // 앱 이름 업데이트 (v5 포함) - 캐시 강제 갱신
+const CACHE_NAME = 'lotto-pro-v9'; // PNG 아이콘 추가 - 캐시 강제 갱신
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './style.css',
     './script.js',
     './manifest.json',
-    './icon.svg'
+    './icon.svg',
+    './icon-192.png',
+    './icon-512.png'
 ];
 
 // Install Event - Cache Assets
